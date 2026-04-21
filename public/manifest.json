@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Airplane",
+  "version": "1.0",
+  "description": "A beach creature that moves at the speed and direction of live flights from OpenSky Network.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Airplane",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://map.opensky-network.org/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": ["windows"]
+}

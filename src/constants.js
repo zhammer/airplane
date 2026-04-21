@@ -51,4 +51,4 @@ export function shoreYAt(x) {
 
 // Character spawn (4x of original TMJ positions)
 export const CHAR_SPAWN_X = 1320;
-export const CHAR_SPAWN_Y = 1140;
+export const CHAR_SPAWN_Y = 1840;

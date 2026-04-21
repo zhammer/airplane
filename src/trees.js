@@ -25,5 +25,5 @@ export function placeTrees(scene) {
     group.create(x, y, 'tree').setScale(1.6).setDepth(2).refreshBody();
   }
 
-  return group;
+  return { group, positions: placed };
 }

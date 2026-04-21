@@ -5,6 +5,10 @@ import {
 } from '../constants.js';
 import { placeTrees } from '../trees.js';
 import { spawnShells } from '../shells.js';
+import { flightState, DEV_MODE } from '../main.js';
+
+// 250kt maps to base game speed; scales linearly above/below
+const SPEED_SCALE = 160 / 250;
 
 const WAVE_W = 640;
 const WAVE_H = 256;
@@ -59,10 +63,11 @@ export class MainScene extends Phaser.Scene {
     });
 
     // Trees (depth 2) — randomly placed in grass zone
-    this.trees = placeTrees(this);
+    const { group: treeGroup, positions: treePositions } = placeTrees(this);
+    this.trees = treeGroup;
 
-    // Shells — randomly placed in sand/grass zones
-    this.shells = spawnShells(this);
+    // Shells — randomly placed in sand/grass zones, kept clear of trees
+    this.shells = spawnShells(this, treePositions);
 
     // Player (depth 3 — always on top), scaled 4x
     this.player = this.physics.add.sprite(CHAR_SPAWN_X, CHAR_SPAWN_Y, 'character');
@@ -94,19 +99,28 @@ export class MainScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, WORLD_W, 2144);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
-    // Keyboard controls
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.wasd = this.input.keyboard.addKeys('W,A,S,D');
+    // Keyboard controls (dev mode only)
+    if (DEV_MODE) {
+      this.cursors = this.input.keyboard.createCursorKeys();
+      this.wasd = this.input.keyboard.addKeys('W,A,S,D');
+    }
   }
 
   update() {
-    const speed = 480;
     let vx = 0, vy = 0;
 
-    if (this.cursors.left.isDown  || this.wasd.A.isDown)  vx = -speed;
-    if (this.cursors.right.isDown || this.wasd.D.isDown)  vx =  speed;
-    if (this.cursors.up.isDown    || this.wasd.W.isDown)  vy = -speed;
-    if (this.cursors.down.isDown  || this.wasd.S.isDown)  vy =  speed;
+    if (DEV_MODE && this.cursors && this.wasd) {
+      const speed = 480;
+      if (this.cursors.left.isDown  || this.wasd.A.isDown)  vx = -speed;
+      if (this.cursors.right.isDown || this.wasd.D.isDown)  vx =  speed;
+      if (this.cursors.up.isDown    || this.wasd.W.isDown)  vy = -speed;
+      if (this.cursors.down.isDown  || this.wasd.S.isDown)  vy =  speed;
+    } else if (flightState.active && flightState.speedKt > 0) {
+      const rad = (flightState.trackDeg * Math.PI) / 180;
+      const mappedSpeed = flightState.speedKt * SPEED_SCALE;
+      vx = Math.sin(rad) * mappedSpeed;
+      vy = -Math.cos(rad) * mappedSpeed;
+    }
 
     this.player.setVelocity(vx, vy);
 
@@ -133,7 +147,7 @@ export class MainScene extends Phaser.Scene {
     this.heldShell = null;
     this.heldShellSprite.setVisible(false);
 
-    const shell = this.add.image(this.player.x, this.player.y, type)
+const shell = this.add.image(this.player.x, this.player.y, type)
       .setScale(0.175)
       .setDepth(1.5);
 
@@ -142,6 +156,7 @@ export class MainScene extends Phaser.Scene {
     this.tweens.add({
       targets: shell,
       y: startY + 320,
+      alpha: 0.1,
       duration: 6000,
       ease: 'Sine.easeIn',
       onUpdate: (tween) => {
