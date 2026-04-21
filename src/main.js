@@ -3,8 +3,10 @@ import { MainScene } from './scenes/MainScene.js';
 
 new Phaser.Game({
   type: Phaser.AUTO,
-  width: 480,
-  height: 360,
+  width: 640,
+  height: 480,
+  zoom: 1,
+  pixelArt: true,
   backgroundColor: 'transparent',
   transparent: true,
   parent: 'game',

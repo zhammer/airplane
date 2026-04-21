@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { background: #3a7d44; display: flex; flex-direction: column; align-items: center; padding: 40px; font-family: monospace; color: #fff; }
+    .stage { position: relative; width: 64px; height: 64px; image-rendering: pixelated; margin: 40px auto; }
+    .stage img { image-rendering: pixelated; }
+    #char { position: absolute; width: 64px; height: 64px; top: 0; left: 0; }
+    #shell { position: absolute; }
+    .controls { display: flex; flex-direction: column; gap: 12px; width: 300px; }
+    label { display: flex; justify-content: space-between; align-items: center; }
+    input[type=range] { width: 180px; }
+    .val { width: 40px; text-align: right; }
+    pre { background: #111; padding: 12px; border-radius: 4px; margin-top: 24px; width: 300px; }
+  </style>
+</head>
+<body>
+  <h2>Shell overlay playground</h2>
+  <div class="stage">
+    <img id="char" src="/assets/character.png" />
+    <img id="shell" src="/assets/shell-pink.png" />
+  </div>
+
+  <div class="controls">
+    <label>
+      offsetX
+      <input type="range" id="ox" min="-32" max="32" value="0" step="1" />
+      <span class="val" id="ox-val">0</span>
+    </label>
+    <label>
+      offsetY
+      <input type="range" id="oy" min="-32" max="32" value="-6" step="1" />
+      <span class="val" id="oy-val">-6</span>
+    </label>
+    <label>
+      scale (px)
+      <input type="range" id="sc" min="4" max="32" value="8" step="1" />
+      <span class="val" id="sc-val">8</span>
+    </label>
+    <label>
+      shell
+      <select id="type">
+        <option value="/assets/shell-pink.png">pink</option>
+        <option value="/assets/shell-purple.png">purple</option>
+      </select>
+    </label>
+  </div>
+
+  <pre id="output"></pre>
+
+  <script>
+    const shell = document.getElementById('shell');
+    const ox = document.getElementById('ox');
+    const oy = document.getElementById('oy');
+    const sc = document.getElementById('sc');
+    const type = document.getElementById('type');
+
+    // Character is displayed at 64px (4x zoom of 16px)
+    // Shell origin is center of the 160px source image
+    // Shell displayed size = scale * 160px
+    const CHAR_PX = 64; // display px
+
+    function update() {
+      const offsetX = parseInt(ox.value);
+      const offsetY = parseInt(oy.value);
+      const sizePx = parseInt(sc.value);
+
+      document.getElementById('ox-val').textContent = offsetX;
+      document.getElementById('oy-val').textContent = offsetY;
+      document.getElementById('sc-val').textContent = sizePx;
+
+      shell.style.width = sizePx + 'px';
+      shell.style.height = sizePx + 'px';
+      // center the shell on character center, then apply offset
+      shell.style.left = (CHAR_PX / 2 - sizePx / 2 + offsetX) + 'px';
+      shell.style.top  = (CHAR_PX / 2 - sizePx / 2 + offsetY) + 'px';
+
+      // Phaser scale = sizePx / 4 / 160  (sizePx in world px / source px)
+      const phaserScale = (sizePx / 4 / 160).toFixed(4);
+      // Phaser offset: world px = display px / 4
+      const phaserOffX = (offsetX / 4).toFixed(1);
+      const phaserOffY = (offsetY / 4).toFixed(1);
+
+      document.getElementById('output').textContent =
+        `heldShellOffset = { x: ${phaserOffX}, y: ${phaserOffY} }\nshell scale      = ${phaserScale}`;
+    }
+
+    [ox, oy, sc].forEach(el => el.addEventListener('input', update));
+    type.addEventListener('change', () => { shell.src = type.value; });
+
+    update();
+  </script>
+</body>
+</html>
